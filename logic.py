@@ -72,13 +72,48 @@ class DatabaseManager:
 
 
     def get_users(self):
-        return [x[0] for x in cur.fetchall()] 
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM users')
+            return [x[0] for x in cur.fetchall()] 
         
     def get_prize_img(self, prize_id):
-        return cur.fetchall()[0][0]
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute('SELECT image FROM prizes WHERE prize_id = ?', (prize_id, ))
+            return cur.fetchall()[0][0]
 
     def get_random_prize(self):
-        return cur.fetchall()[0]
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM prizes ORDER BY RANDOM() LIMIT 1')
+            return cur.fetchall()[0]
+        
+    def get_winners_count(self, prize_id):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM winners WHERE prize_id = ?", (prize_id, ))
+            return cur.fetchall()[0][0]
+   
+   
+    def get_rating(self):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute('''
+                        SELECT user_name, count(*)
+                        FROM winners
+                        INNER JOIN users
+                        ON winners.user_id = users.user_id
+                        GROUP BY winners.user_id
+                        ''')
+            return cur.fetchall()
+        
+
     
   
 def hide_img(img_name):
